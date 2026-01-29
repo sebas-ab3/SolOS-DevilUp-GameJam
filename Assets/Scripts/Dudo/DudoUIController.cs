@@ -98,45 +98,57 @@ public class DudoUIController : MonoBehaviour
 
     private IEnumerator AttachWhenReady()
     {
+        // Wait for GameDirector to exist
         while (Game.Core.GameDirector.Instance == null)
             yield return null;
 
         _dir = Game.Core.GameDirector.Instance;
 
-        // in AttachWhenReady() after you get _dir:
+        // Subscribe once
         if (!_subscribed && _dir != null)
         {
             _dir.OnMatchActive += OnMatchActive;
-            _dir.OnStateChanged += HandleStateChanged; // NEW: reset when leaving Match
+            _dir.OnStateChanged += HandleStateChanged; // reset when leaving Match
             _subscribed = true;
             Debug.Log("[DudoUI] Subscribed to OnMatchActive & OnStateChanged");
         }
 
-        switch (_dir.State)
+        // ---- Initial sync ----
+        var state = _dir.State;
+
+        if (state == Game.Core.GameState.Freeplay)
         {
-            case Game.Core.GameState.Freeplay:
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (autoStartFreeplay) StartMatch();
-                else PaintIdle();
+            if (autoStartFreeplay) StartMatch();
+            else PaintIdle();
 #else
-    PaintIdle(); // or even hide this panel in production
+        PaintIdle(); // or hide this panel in production
 #endif
-                break;
+            yield break;
+        }
 
-
-            case Game.Core.GameState.Match:
-                // Do NOT auto-start here. Wait for OnMatchActive after player clicks START.
+        if (state == Game.Core.GameState.Match)
+        {
+            // If the player already pressed START before this UI enabled, begin immediately.
+            if (_dir.MatchGameplayActive)
+            {
+                Debug.Log("[DudoUI] Late attach & gameplay already active → StartMatch()");
+                StartMatch();
+            }
+            else
+            {
                 Debug.Log("[DudoUI] In Match (pre-activation). Waiting for OnMatchActive…");
                 SetControls(false);
                 SetRowsVisible(false);
-                break;
-
-            default: // Intermission etc.
-                Debug.Log("[DudoUI] Not in Match. Idling UI.");
-                PaintIdle();
-                break;
+            }
+            yield break;
         }
+
+        // Any other state (Intermission, Tutorial, etc.)
+        Debug.Log("[DudoUI] Not in Match. Idling UI.");
+        PaintIdle();
     }
+
 
     private void OnDisable()
     {
@@ -486,7 +498,7 @@ public class DudoUIController : MonoBehaviour
             var dir = Game.Core.GameDirector.Instance;
             if (dir != null)
             {
-                bool playerWon = (winner != null && !gm.players[0].eliminated);
+                bool playerWon = (winner == gm.players[0]);
                 _matchStarted = false; // reset local guard
                 dir.EndMatch(playerWon); // ← CampaignManager will react and route properly
             }

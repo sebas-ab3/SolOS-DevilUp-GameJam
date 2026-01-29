@@ -36,7 +36,13 @@ namespace Game.Gameplay
         [Header("Visual Feedback")]
         [SerializeField] [Range(0f, 1f)] private float maxDarknessAlpha = 0.7f; // Max darkness
         [SerializeField] private AnimationCurve darknessCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-
+        
+        // ShadowTimerManager.cs (fields)
+        [Header("Pause Behavior (Optional)")]
+        [SerializeField] private DudoUIController dudoController;
+        [SerializeField] private bool pauseWithDudoPause = false;
+        
+        
         // Runtime state
         private bool _isActive = false;
         private bool _shadowActive = false;
@@ -132,6 +138,7 @@ namespace Game.Gameplay
             }
         }
 
+        
         private void Update()
         {
             if (!_isActive) return;
@@ -355,16 +362,12 @@ namespace Game.Gameplay
 
             yield return new WaitForSeconds(2f);
 
-            // Return to MatchReady screen (Match state, NOT activated)
+            // Return to MatchReady for the SAME enemy (treat as a loss)
             if (_dir != null)
             {
-                // Step 1: leave any running match/session
-                _dir.SetState(GameState.Intermission);
-
-                // Step 2: next frame go back to Match (pre-activation -> MatchReadyUI shows)
-                yield return null; // let HUD swap a frame
-                _dir.SetState(GameState.Match);
+                _dir.EndMatch(false);  // loss → Director restarts Match; CampaignIndex unchanged
             }
+
 
         }
 

@@ -22,10 +22,7 @@ namespace Game.Core
         
         public event Action OnMatchActive;   // NEW: Fired when "Start Match" button is pressed
         public GameState State => _state;
-
-        [Header("Campaign Progress")]
-        [SerializeField] private int _currentMatchNumber = 1; // Tracks which match (1, 2, or 3)
-        public int CurrentMatchNumber => _currentMatchNumber;
+        
         
         // Events (subscribe in OnEnable, unsubscribe in OnDisable)
         public event Action<GameState, GameState> OnStateChanged;
@@ -119,40 +116,31 @@ namespace Game.Core
         public void EndMatch(bool playerWon)
         {
             OnMatchEnded?.Invoke(playerWon);
-            
-            if (playerWon)
-                CompleteMatch(); // NEW: Handle campaign progression
-            else
-                StartMatch(); // Restart same match if player lost
-        }
 
-        // NEW: Campaign progression methods
-        public void CompleteMatch()
-        {
-            _currentMatchNumber++;
-            
-            if (_currentMatchNumber > 3)
+            if (!playerWon)
             {
-                // All 3 matches complete!
-                SetState(GameState.CampaignComplete);
+                // Loss: restart the SAME enemy (CampaignManager keeps CurrentIndex unchanged)
+                StartMatch();            // back to Match state (pre-activation → ready screen)
+                return;
             }
-            else
-            {
-                // Go to intermission before next match
-                SetState(GameState.Intermission);
-            }
-        }
 
-        public void StartNextMatch()
-        {
-            SetState(GameState.Match);
-            OnMatchStarted?.Invoke();
+            // Win: do nothing here — CampaignManager.HandleMatchEnded(playerWon) will:
+            //  - Set Intermission (if not last)
+            //  - Or set CampaignComplete (if last)
         }
 
         public void ResetCampaign()
         {
-            _currentMatchNumber = 1;
-            SetState(GameState.Tutorial);
+            var cm = Game.Campaign.CampaignManager.Instance;
+            if (cm != null)
+            {
+                cm.BeginCampaign();   // sets CurrentIndex = 0 and SetState(Tutorial)
+            }
+            else
+            {
+                // Fallback: just go to Tutorial so HUD/UI reset safely
+                SetState(GameState.Tutorial);
+            }
         }
 
         public void StartIntermission() => SetState(GameState.Intermission);

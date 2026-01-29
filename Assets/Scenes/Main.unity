@@ -3134,7 +3134,6 @@ MonoBehaviour:
   _initialState: 1
   _state: 0
   _matchGameplayActive: 0
-  _currentMatchNumber: 1
 --- !u!4 &658156314
 Transform:
   m_ObjectHideFlags: 0
@@ -7387,6 +7386,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  dudoController: {fileID: 0}
+  pauseWithDudoPause: 0
 --- !u!4 &1743257721
 Transform:
   m_ObjectHideFlags: 0

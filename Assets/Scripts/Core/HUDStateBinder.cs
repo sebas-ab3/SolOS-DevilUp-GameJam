@@ -103,8 +103,6 @@ namespace Game.UI
             SetPanel(dudoUI,         false, why);
             SetPanel(fallbackUI,     false, why);
 
-            bool gameplayActive = (_dir != null && _dir.MatchGameplayActive);
-
             switch (state)
             {
                 case GameState.Freeplay:

@@ -80,25 +80,23 @@ namespace Game.UI
 
         private void RefreshUI()
         {
-            if (_dir == null) return;
-
-            int matchNum = _dir.CurrentMatchNumber;
+            // Source of truth is CampaignManager
+            int matchNum = 1; // default
+            var cm = Game.Campaign.CampaignManager.Instance;
+            if (cm != null)
+                matchNum = Mathf.Clamp(cm.CurrentIndex + 1, 1, 3);
 
             // Update match number
-            if (matchNumberText != null)
-            {
+            if (matchNumberText)
                 matchNumberText.text = $"MATCH {matchNum}";
-            }
 
             // Update flavor text
-            if (instructionsText != null)
+            if (instructionsText)
             {
                 string intro = "";
                 if (matchNum > 0 && matchNum <= matchIntroTexts.Length)
-                {
                     intro = matchIntroTexts[matchNum - 1];
-                }
-                
+
                 instructionsText.text = intro + "\n\nPress START when ready.";
             }
         }
